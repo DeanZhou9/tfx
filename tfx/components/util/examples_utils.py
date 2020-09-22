@@ -28,7 +28,11 @@ from tfx.types import standard_artifacts
 
 
 def get_payload_format(examples: types.Artifact) -> int:
-  """Returns the payload format of `examples`.
+  """Returns the payload format of Examples artifact.
+
+  If Examples artifact does not contain the "payload_format" custom property,
+  it is made before tfx supports multiple payload format, and can regard as
+  tf.Example format.
 
   Args:
     examples: A standard_artifacts.Examples artifact.
@@ -38,10 +42,11 @@ def get_payload_format(examples: types.Artifact) -> int:
   """
   assert examples.type is standard_artifacts.Examples, (
       'examples must be of type standard_artifacts.Examples')
-  payload_format_from_artifact = examples.get_string_custom_property(
-      example_gen_utils.PAYLOAD_FORMAT_PROPERTY_NAME)
-  if payload_format_from_artifact:
-    return example_gen_pb2.PayloadFormat.Value(payload_format_from_artifact)
+  if examples.has_custom_property(
+      example_gen_utils.PAYLOAD_FORMAT_PROPERTY_NAME):
+    return example_gen_pb2.PayloadFormat.Value(
+        examples.get_string_custom_property(
+            example_gen_utils.PAYLOAD_FORMAT_PROPERTY_NAME))
   else:
     return example_gen_pb2.PayloadFormat.FORMAT_TF_EXAMPLE
 
