@@ -21,3 +21,75 @@ message PythonClassExecutableSpec {
   string class_path = 1;
 }
 
+// Specification for Container based executables.
+// This executable resembles the spec defined by TemplatedExecutorContainerSpec.
+message ContainerExecutableSpec {
+  // A placeholder to represent the value of an input. The input must be either
+  // 1. a primitive-typed artifact; or
+  // 2. a parameter.
+  message InputValuePlaceholder {
+    // Name of the associated input artifact, or parameter.
+    string input_name = 1;
+  }
+
+  // A placeholder to represent the URI of an input artifact.
+  message InputUriPlaceholder {
+    // Name of the associated input artifact.
+    string input_name = 1;
+  }
+
+  // A placeholder to represent the URI of an output artifact.
+  message OutputUriPlaceholder {
+    // Name of the associated output artifact.
+    string output_name = 1;
+  }
+
+  // A primitive placeholder, can be one of the following types:
+  // 1. a plain string;
+  // 2. an InputValuePlaceholder;
+  // 3. an InputUriPlaceholder;
+  // 4. an OutputUriPlaceholder.
+  message PrimitivePlaceholder {
+    oneof kind {
+      string arg = 1;
+      InputValuePlaceholder input_value = 2;
+      InputUriPlaceholder input_uri = 3;
+      OutputUriPlaceholder output_uri = 4;
+    }
+  }
+
+  // A placeholder for result of concatenation of multiple
+  // PrimitivePlaceholders. For example:
+  //
+  // concat_placeholder:
+  // - placeholders:
+  //     input_value:
+  //       input_name: parameter_1
+  // - placeholders:
+  //     arg: -
+  // - placeholders:
+  //     input_uri: input_1
+  //
+  // And if at runtime parameter_1 has value 'value_1' and input_1 has uri:
+  // gs://my-bucket/1, the whole concat_placeholder will be resolved as:
+  // value_1-gs://my-bucket/1
+  message ConcatPlaceholder {
+    // The components that will be concatenated at runtime.
+    repeated PrimitivePlaceholder placeholders = 1;
+  }
+
+  // Represents a command line argument.
+  message CommandlineArgument {
+    oneof kind {
+      PrimitivePlaceholder primitive_placeholder = 2;
+      ConcatPlaceholder concat_placeholder = 3;
+    }
+  }
+
+  // The uri of the container image.
+  string image = 1;
+  // The commands of the container.
+  repeated string commands = 2;
+  // The args of the container entrypoint.
+  repeated CommandlineArgument args = 3;
+}
